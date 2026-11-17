@@ -1,5 +1,8 @@
 # AEGIS ORBIT — The Last Keeper
 
+[![make.fun best-game-01](https://make.fun/badge/best-game-01.svg)](https://make.fun/bounty/best-game-01)
+[![rank](https://make.fun/badge/best-game-01/Elvan08/best-game-01-entry/rank.svg)](https://make.fun/bounty/best-game-01)
+
 Every star in the sky has gone out but one.
 
 Aegis is the last lit world, and the Hollow — things that feed on light —
