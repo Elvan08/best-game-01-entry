@@ -1,13 +1,17 @@
-# AEGIS ORBIT
+# AEGIS ORBIT — The Last Keeper
 
-One guardian. One planet. No second chances.
+Every star in the sky has gone out but one.
 
-Aegis Orbit is a wave-defense arcade game for the desktop browser. You are the
-last orbital guardian of the planet Aegis: your cannon rides a ring around the
-planet, and everything in the dark is falling toward it. Shoot down asteroids,
-drones, weavers and carriers before they tear the shield apart, salvage the
-wreckage, and refit your cannon between waves — because the next wave is
-always bigger.
+Aegis is the last lit world, and the Hollow — things that feed on light —
+fall toward it night after night. You are its Keeper: not a soldier, the one
+who stayed. Your cannon rides a ring around the planet; shoot down the cinder
+rocks, snuffer drones, dimweavers and gloam carriers before they tear the
+shield apart, salvage the wreckage, and refit between nights — because the
+next night is always darker. Each night has a name, and the Keeper keeps a
+log. How many nights can the light be held?
+
+A wave-defense arcade game for the desktop browser: one guardian, one planet,
+no second chances.
 
 ## Play
 
@@ -22,9 +26,9 @@ No build step, no network requests, no dependencies.
 - **Hold click** — fire
 - **Space** — nova blast: clears everything near the planet (limited charges)
 - **A / D or ← / →** — orbit the ring by keyboard
-- **1–5** — buy in the shipyard between waves
-- **Enter** — launch the next wave
-- **P** — pause · **M** — mute
+- **1–5** — buy in the shipyard between nights
+- **Enter** — launch the next night (also starts a run from the title / end screens)
+- **P or Esc** — pause · **M** — mute
 
 Mint **star cores** drop from wrecks (carriers always drop one): shoot a core
 to bank a nova charge. In the shipyard you can buy a faster cycler, twin

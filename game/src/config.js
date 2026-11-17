@@ -44,6 +44,48 @@ export function wavePlan(n) {
   };
 }
 
+// THE LAST KEEPER — the story frame. Every other star has gone out; Aegis is
+// the last lit world, and the Hollow — things that feed on light — fall toward
+// it night after night. The guardian is its Keeper: not a soldier, the one who
+// stayed. Waves are NIGHTS; each has a name and a line in the Keeper's log,
+// read in the shipyard while the sky is quiet. Past the written nights the
+// log keeps counting, because the Keeper does.
+export const STORY = {
+  keeper: 'THE LAST KEEPER',
+  star: 'AEGIS, THE LAST LIT STAR',
+  nights: [
+    { name: 'FIRST EMBERS', log: 'They came as sparks first. I almost thanked them for the light.' },
+    { name: 'THE DIMMING', log: 'The dark learned my orbit tonight. It will not unlearn it.' },
+    { name: 'WHAT THE ROCKS REMEMBER', log: 'The stones carry old fire in them. Even the Hollow was warm, once.' },
+    { name: 'A CHOIR OF STATIC', log: 'The weavers sing through the black. I hum back so the star hears a voice.' },
+    { name: 'THE GLOAM CARRIERS', log: 'They send their cathedrals now — slow, patient, full of teeth.' },
+    { name: 'HALF-LIGHT', log: 'Half the sky is theirs. The half above Aegis is mine.' },
+    { name: 'THE LONG ANSWER', log: 'Every bolt I fire is a sentence: not tonight. Not this star.' },
+    { name: 'EMBERWEATHER', log: 'The cores drift like seed. Even dying, this orbit grows light.' },
+    { name: 'THE HOLLOW, CLOSE', log: 'I can see them looking back now. Good. Let them aim at me.' },
+    { name: 'TEN THOUSAND DAWNS', log: 'No dawn is coming. I keep the watch anyway. That is the whole of it.' },
+  ],
+  // For nights past the written ten, the log still speaks.
+  lateLog: [
+    'Night uncounted. The star still burns. So do I.',
+    'The Hollow keeps the appointment. So does the Keeper.',
+    'I stopped counting nights. I did not stop keeping them.',
+  ],
+  // The closing line when the shield fails, by how long the light was held.
+  epitaph: (nights) =>
+    nights <= 2
+      ? 'The light went out early — but it was lit, and it was kept.'
+      : nights <= 5
+        ? 'Aegis dims. Somewhere in the dark, its embers are still travelling.'
+        : 'The last star falls having been defended to the end. That is not nothing. That is everything.',
+};
+
+export function nightOf(n) {
+  const s = STORY.nights[n - 1];
+  if (s) return s;
+  return { name: `NIGHT ${n}`, log: STORY.lateLog[(n - 1) % STORY.lateLog.length] };
+}
+
 // The between-wave shop. Each item can be bought repeatedly; price grows per level.
 export const SHOP = [
   { id: 'rapid', name: 'RAPID CYCLER', desc: 'Fire 18% faster', base: 45, growth: 1.55, max: 6 },

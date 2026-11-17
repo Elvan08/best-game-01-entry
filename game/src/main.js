@@ -1,6 +1,6 @@
-// AEGIS ORBIT — boot and the frame loop. States move like this:
-// title --click--> wave 1..n --wave cleared--> shop --enter--> next wave,
-// and shield 0 --> game over --click--> a fresh run.
+// AEGIS ORBIT — THE LAST KEEPER. Boot and the frame loop. States move like
+// this: title --click--> night 1..n --night held--> shipyard --enter--> next
+// night, and shield 0 --> the light goes out --click--> a fresh watch.
 
 import { createInput } from './input.js';
 import { createAudio } from './audio.js';
@@ -29,12 +29,12 @@ if (shotName) {
     last = now;
 
     if (input.pressed.has('KeyM')) audio.toggleMute();
-    if (input.pressed.has('KeyP') && world.phase === 'playing') world.paused = !world.paused;
+    if ((input.pressed.has('KeyP') || input.pressed.has('Escape')) && world.phase === 'playing') world.paused = !world.paused;
 
-    if (world.phase === 'title' && input.clicked) {
+    if (world.phase === 'title' && (input.clicked || input.pressed.has('Enter'))) {
       audio.unlock();
       game.startRun();
-    } else if (world.phase === 'over' && input.clicked) {
+    } else if (world.phase === 'over' && (input.clicked || input.pressed.has('Enter'))) {
       audio.unlock();
       game.startRun();
     } else if (world.phase === 'shop') {

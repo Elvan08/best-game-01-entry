@@ -3,7 +3,7 @@
 // a deterministic mid-game moment (same seed, same frame) so the screenshots
 // are real renders of the real game, reproducible by anyone.
 
-import { PLANET, ENEMIES } from './config.js';
+import { PLANET, ENEMIES, STORY, nightOf } from './config.js';
 import { reseed, rand, randRange } from './random.js';
 
 function poseEnemies(world, list) {
@@ -109,6 +109,7 @@ export function poseScene(world, input, name, seed) {
     world.shield = 64;
     world.novaCharges = 1;
     world.levels = { rapid: 2, twin: 1, regen: 1, over: 0 };
+    world.logLine = nightOf(world.wave).log;
     poseEnemies(world, [['asteroid', 480, 140]]);
     input.mouseX = PLANET.x;
     input.mouseY = PLANET.y - 300;
@@ -121,6 +122,7 @@ export function poseScene(world, input, name, seed) {
   world.score = 18930;
   world.kills = 163;
   world.shield = 0;
+  world.epitaphLine = STORY.epitaph(world.finalWave);
   poseParticles(world, 60);
   input.mouseX = PLANET.x + 100;
   input.mouseY = PLANET.y + 100;

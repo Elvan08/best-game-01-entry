@@ -1,7 +1,7 @@
 // AEGIS ORBIT — the world: state, spawning, combat, waves and the shop.
 // Rendering lives in render.js; this file never touches the canvas.
 
-import { PLANET, GUARDIAN, NOVA, ENEMIES, SHOP, wavePlan } from './config.js';
+import { PLANET, GUARDIAN, NOVA, ENEMIES, SHOP, wavePlan, STORY, nightOf } from './config.js';
 import { rand, randRange } from './random.js';
 
 export function createWorld(audio) {
@@ -31,6 +31,8 @@ export function createWorld(audio) {
     message: '',
     messageTimer: 0,
     finalWave: 0,
+    logLine: '', // the Keeper's log entry for the night just begun
+    epitaphLine: '', // the closing story line when the light goes out
   };
 
   const fireInterval = () => GUARDIAN.baseFireInterval * Math.pow(0.82, world.levels.rapid);
@@ -102,8 +104,10 @@ export function createWorld(audio) {
     world.spawnQueue = queue;
     world.spawnTimer = 0.6;
     world.phase = 'playing';
-    world.message = `WAVE ${n}`;
-    world.messageTimer = 2.0;
+    const night = nightOf(n);
+    world.message = `NIGHT ${n} — ${night.name}`;
+    world.messageTimer = 2.4;
+    world.logLine = night.log;
     audio.waveStart();
   }
 
@@ -120,6 +124,8 @@ export function createWorld(audio) {
     world.cores = [];
     world.levels = { rapid: 0, twin: 0, regen: 0, over: 0 };
     world.shake = 0;
+    world.logLine = '';
+    world.epitaphLine = '';
     startWave(1);
   }
 
@@ -190,6 +196,7 @@ export function createWorld(audio) {
       world.shield = 0;
       world.phase = 'over';
       world.finalWave = world.wave;
+      world.epitaphLine = STORY.epitaph(world.finalWave);
       burst(PLANET.x, PLANET.y, '#57b6ff', 90, 380);
       burst(PLANET.x, PLANET.y, '#ff5d73', 60, 300);
       audio.gameOver();
@@ -347,7 +354,7 @@ export function createWorld(audio) {
         world.phase = 'shop';
         const bonus = 100 * world.wave;
         world.score += bonus;
-        floater(PLANET.x, PLANET.y - PLANET.radius - 30, `WAVE BONUS +${bonus}`, '#59ffc8');
+        floater(PLANET.x, PLANET.y - PLANET.radius - 30, `NIGHT HELD +${bonus}`, '#59ffc8');
       }
     } else {
       world.waveClearTimer = 0;

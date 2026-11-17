@@ -2,7 +2,7 @@
 // glowing atmosphere, a parallax starfield, polygon ships and rocks, and a
 // HUD that reads at a glance. Screens (title, shop, game over) draw here too.
 
-import { VIEW, PLANET, GUARDIAN, NOVA, SHOP, COLORS } from './config.js';
+import { VIEW, PLANET, GUARDIAN, NOVA, SHOP, COLORS, nightOf } from './config.js';
 import { rand, reseed } from './random.js';
 
 // Fixed starfield, generated once from a seed so every frame agrees.
@@ -252,7 +252,7 @@ function drawHUD(ctx, world) {
   ctx.fillStyle = COLORS.text;
   ctx.font = '700 21px "Segoe UI", system-ui, sans-serif';
   ctx.textAlign = 'left';
-  ctx.fillText(`WAVE ${Math.max(1, world.wave)}`, 22, 68);
+  ctx.fillText(`NIGHT ${Math.max(1, world.wave)}`, 22, 68);
   ctx.font = '600 15px "Segoe UI", system-ui, sans-serif';
   ctx.fillStyle = COLORS.dim;
   ctx.fillText(`hostiles left ${world.enemies.length + world.spawnQueue.length}`, 22, 90);
@@ -281,44 +281,67 @@ function panel(ctx, w, h) {
 }
 
 function drawTitle(ctx, world) {
-  const { x } = panel(ctx, 620, 400);
+  const { x } = panel(ctx, 660, 430);
   const cx = VIEW.w / 2;
   ctx.textAlign = 'center';
   ctx.fillStyle = COLORS.text;
   ctx.font = '800 64px "Segoe UI", system-ui, sans-serif';
-  ctx.fillText('AEGIS ORBIT', cx, 268);
-  ctx.fillStyle = '#57b6ff';
-  ctx.font = '600 19px "Segoe UI", system-ui, sans-serif';
-  ctx.fillText('one guardian · one planet · no second chances', cx, 304);
+  ctx.fillText('AEGIS ORBIT', cx, 238);
+  ctx.fillStyle = '#59ffc8';
+  ctx.font = '700 17px "Segoe UI", system-ui, sans-serif';
+  ctx.fillText('T H E   L A S T   K E E P E R', cx, 272);
   ctx.fillStyle = COLORS.dim;
   ctx.font = '16px "Segoe UI", system-ui, sans-serif';
-  ctx.fillText('Aim with the mouse — your guardian rides the orbit ring.', cx, 356);
-  ctx.fillText('Hold click to fire. Space fires a nova that clears the sky.', cx, 382);
-  ctx.fillText('Shoot mint star cores to recharge the nova.', cx, 408);
-  ctx.fillText('Between waves, spend salvage credits in the shipyard.', cx, 434);
+  ctx.fillText('Every star in the sky has gone out but one.', cx, 316);
+  ctx.fillText('The Hollow — things that feed on light — fall toward it, night after night.', cx, 342);
+  ctx.fillText('You are the Keeper of Aegis: not a soldier. The one who stayed.', cx, 368);
+  ctx.fillStyle = '#cfe6ff';
+  ctx.font = '15px "Segoe UI", system-ui, sans-serif';
+  ctx.fillText('Aim with the mouse — your cannon rides the orbit ring. Hold click to fire.', cx, 410);
+  ctx.fillText('Space fires a nova that clears the sky; shoot mint star cores to recharge it.', cx, 434);
+  ctx.fillText('Between nights, spend salvage in the shipyard. A/D or ←/→ orbits by keyboard.', cx, 458);
   const pulse = 0.65 + 0.35 * Math.sin(world.time * 3.4);
   ctx.globalAlpha = pulse;
   ctx.fillStyle = '#59ffc8';
   ctx.font = '700 24px "Segoe UI", system-ui, sans-serif';
-  ctx.fillText('CLICK TO DEFEND', cx, 492);
+  ctx.fillText('CLICK TO TAKE THE WATCH', cx, 516);
   ctx.globalAlpha = 1;
   ctx.textAlign = 'left';
   void x;
 }
 
+// Greedy word wrap for the story lines, measured against the live font.
+function wrapText(ctx, text, maxWidth) {
+  const words = text.split(' ');
+  const lines = [];
+  let line = '';
+  for (const w of words) {
+    const next = line ? `${line} ${w}` : w;
+    if (ctx.measureText(next).width > maxWidth && line) {
+      lines.push(line);
+      line = w;
+    } else line = next;
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
 function drawShop(ctx, world, shopPrice) {
-  const { x, y } = panel(ctx, 760, 470);
+  const { x, y } = panel(ctx, 760, 486);
   const cx = VIEW.w / 2;
   ctx.textAlign = 'center';
   ctx.fillStyle = COLORS.text;
-  ctx.font = '800 34px "Segoe UI", system-ui, sans-serif';
-  ctx.fillText(`WAVE ${world.wave} HELD`, cx, y + 58);
+  ctx.font = '800 30px "Segoe UI", system-ui, sans-serif';
+  ctx.fillText(`NIGHT ${world.wave} HELD — ${nightOf(world.wave).name}`, cx, y + 52);
+  ctx.fillStyle = COLORS.dim;
+  ctx.font = 'italic 15px "Segoe UI", system-ui, sans-serif';
+  ctx.fillText(`Keeper's log — “${world.logLine}”`, cx, y + 78);
   ctx.fillStyle = COLORS.credit;
   ctx.font = '600 18px "Segoe UI", system-ui, sans-serif';
-  ctx.fillText(`◈ ${world.credits} salvage credits — press 1–5 to refit`, cx, y + 88);
+  ctx.fillText(`◈ ${world.credits} salvage credits — press 1–5 to refit`, cx, y + 106);
   ctx.textAlign = 'left';
   SHOP.forEach((item, i) => {
-    const rowY = y + 122 + i * 52;
+    const rowY = y + 128 + i * 52;
     const isNova = item.id === 'nova';
     const lvl = isNova ? world.novaCharges : world.levels[item.id] || 0;
     const maxed = isNova ? world.novaCharges >= NOVA.maxCharges : lvl >= item.max;
@@ -348,29 +371,34 @@ function drawShop(ctx, world, shopPrice) {
   ctx.fillStyle = '#59ffc8';
   ctx.font = '700 21px "Segoe UI", system-ui, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(`PRESS ENTER — WAVE ${world.wave + 1}`, cx, y + 428);
+  ctx.fillText(`PRESS ENTER — NIGHT ${world.wave + 1}`, cx, y + 446);
   ctx.globalAlpha = 1;
   ctx.textAlign = 'left';
 }
 
 function drawOver(ctx, world) {
-  panel(ctx, 560, 330);
+  panel(ctx, 600, 380);
   const cx = VIEW.w / 2;
   ctx.textAlign = 'center';
   ctx.fillStyle = COLORS.danger;
   ctx.font = '800 46px "Segoe UI", system-ui, sans-serif';
-  ctx.fillText('AEGIS HAS FALLEN', cx, 268);
+  ctx.fillText('THE LIGHT GOES OUT', cx, 246);
   ctx.fillStyle = COLORS.text;
   ctx.font = '600 20px "Segoe UI", system-ui, sans-serif';
-  ctx.fillText(`You held ${world.finalWave} wave${world.finalWave === 1 ? '' : 's'} · ${world.kills} kills`, cx, 322);
+  ctx.fillText(`The Keeper held ${world.finalWave} night${world.finalWave === 1 ? '' : 's'} · ${world.kills} kills`, cx, 292);
   ctx.fillStyle = COLORS.credit;
   ctx.font = '700 26px "Segoe UI", system-ui, sans-serif';
-  ctx.fillText(`SCORE ${world.score.toLocaleString('en-US')}`, cx, 362);
+  ctx.fillText(`SCORE ${world.score.toLocaleString('en-US')}`, cx, 330);
+  ctx.fillStyle = COLORS.dim;
+  ctx.font = 'italic 15px "Segoe UI", system-ui, sans-serif';
+  wrapText(ctx, world.epitaphLine, 520).forEach((line, i) => {
+    ctx.fillText(line, cx, 368 + i * 22);
+  });
   const pulse = 0.65 + 0.35 * Math.sin(world.time * 3.4);
   ctx.globalAlpha = pulse;
   ctx.fillStyle = '#59ffc8';
   ctx.font = '700 21px "Segoe UI", system-ui, sans-serif';
-  ctx.fillText('CLICK TO TRY AGAIN', cx, 428);
+  ctx.fillText('CLICK TO KEEP THE WATCH AGAIN', cx, 452);
   ctx.globalAlpha = 1;
   ctx.textAlign = 'left';
 }
@@ -452,7 +480,7 @@ export function render(ctx, world, input, shopPrice) {
     ctx.fillText('PAUSED', VIEW.w / 2, VIEW.h / 2);
     ctx.font = '600 16px "Segoe UI", system-ui, sans-serif';
     ctx.fillStyle = COLORS.dim;
-    ctx.fillText('P to resume · A/D or ←/→ to orbit · M to mute', VIEW.w / 2, VIEW.h / 2 + 34);
+    ctx.fillText('P or Esc to resume · A/D or ←/→ to orbit · M to mute', VIEW.w / 2, VIEW.h / 2 + 34);
     ctx.textAlign = 'left';
   }
 }
