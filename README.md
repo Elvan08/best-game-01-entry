@@ -14,6 +14,13 @@ shield apart, salvage the wreckage, and refit between nights — because the
 next night is always darker. Each night has a name, and the Keeper keeps a
 log. How many nights can the light be held?
 
+And every fifth night, the Hollow Sun rises in person: a boss that holds
+its distance and circles the planet, shedding minions and spitting embers
+you can shoot down, immune to your nova, faster and angrier as it dies.
+Bring it down and the Keeper claims one of three permanent boons — a bigger
+shield, starforged bolts, a second dawn — before the shipyard opens. The
+boons are the run's long arc: survive the nights, hunt the fifth.
+
 A wave-defense arcade game for the desktop browser: one guardian, one planet,
 no second chances.
 
@@ -31,6 +38,7 @@ No build step, no network requests, no dependencies.
 - **Space** — nova blast: clears everything near the planet (limited charges)
 - **A / D or ← / →** — orbit the ring by keyboard
 - **1–5** — buy in the shipyard between nights
+- **1–3** — claim a Keeper's boon after a Hollow Sun falls
 - **Enter** — launch the next night (also starts a run from the title / end screens)
 - **P or Esc** — pause · **M** — mute
 

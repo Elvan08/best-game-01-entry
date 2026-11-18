@@ -1,6 +1,8 @@
 // AEGIS ORBIT — THE LAST KEEPER. Boot and the frame loop. States move like
 // this: title --click--> night 1..n --night held--> shipyard --enter--> next
 // night, and shield 0 --> the light goes out --click--> a fresh watch.
+// Every fifth night is a Hollow Sun: --sun falls--> the boon draft
+// --pick 1-3--> shipyard, with the boon kept for the rest of the watch.
 
 import { createInput } from './input.js';
 import { createAudio } from './audio.js';
@@ -37,6 +39,10 @@ if (shotName) {
     } else if (world.phase === 'over' && (input.clicked || input.pressed.has('Enter'))) {
       audio.unlock();
       game.startRun();
+    } else if (world.phase === 'blessing') {
+      for (let i = 0; i < 3; i++) {
+        if (input.pressed.has(`Digit${i + 1}`)) game.chooseBlessing(i);
+      }
     } else if (world.phase === 'shop') {
       for (let i = 0; i < SHOP.length; i++) {
         if (input.pressed.has(`Digit${i + 1}`)) game.buy(SHOP[i]);

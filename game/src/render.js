@@ -2,7 +2,7 @@
 // glowing atmosphere, a parallax starfield, polygon ships and rocks, and a
 // HUD that reads at a glance. Screens (title, shop, game over) draw here too.
 
-import { VIEW, PLANET, GUARDIAN, NOVA, SHOP, COLORS, nightOf } from './config.js';
+import { VIEW, PLANET, GUARDIAN, NOVA, SHOP, COLORS, BOSS, BLESSINGS, BLESSING_INTRO, bossOf, nightOf } from './config.js';
 import { rand, reseed } from './random.js';
 
 // Fixed starfield, generated once from a seed so every frame agrees.
@@ -79,7 +79,7 @@ function drawPlanet(ctx, world) {
   ctx.restore();
 
   // Shield ring: bright while the shield holds, angry red as it fails.
-  const frac = world.shield / PLANET.maxShield;
+  const frac = world.shield / (world.maxShield || PLANET.maxShield);
   ctx.strokeStyle = frac > 0.3 ? 'rgba(89,255,200,0.75)' : 'rgba(255,93,115,0.9)';
   ctx.lineWidth = 3;
   ctx.beginPath();
@@ -205,8 +205,100 @@ function drawEnemy(ctx, e, time) {
     ctx.fillRect(-24, -e.radius - 13, 48, 5);
     ctx.fillStyle = '#ffb347';
     ctx.fillRect(-24, -e.radius - 13, 48 * (e.hp / e.maxHp), 5);
+  } else if (e.kind === 'boss') {
+    // THE HOLLOW SUN: a black disc wearing a corona of embers, with one
+    // burning eye that watches the planet. It pulses as it feeds.
+    const pulse = 1 + Math.sin(time * 2.1 + e.wobble) * 0.05;
+    const r = e.radius * pulse;
+    const glow = ctx.createRadialGradient(0, 0, r * 0.4, 0, 0, r * 2.3);
+    glow.addColorStop(0, 'rgba(255,120,40,0.34)');
+    glow.addColorStop(1, 'rgba(255,80,30,0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(0, 0, r * 2.3, 0, Math.PI * 2);
+    ctx.fill();
+    // Corona spikes, turning slowly against the disc's own spin.
+    ctx.strokeStyle = flash ? '#ffe9c9' : '#ff9e3d';
+    ctx.lineWidth = 3;
+    for (let i = 0; i < 12; i++) {
+      const a = e.rot * 0.7 + (i / 12) * Math.PI * 2;
+      const flicker = 1 + 0.22 * Math.sin(time * 5 + e.seed + i * 1.9);
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * r * 0.96, Math.sin(a) * r * 0.96);
+      ctx.lineTo(Math.cos(a) * r * 1.3 * flicker, Math.sin(a) * r * 1.3 * flicker);
+      ctx.stroke();
+    }
+    ctx.fillStyle = flash ? '#3a2a33' : '#07040c';
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,158,61,0.85)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // The eye: a burning slit aimed at Aegis. In the last 0.6 s before a
+    // volley it flares wide and bright — the telegraph a Keeper learns to
+    // read — and once the Sun is enraged it never fully dims again.
+    const ea = Math.atan2(PLANET.y - e.y, PLANET.x - e.x);
+    ctx.rotate(ea);
+    const windup = e.emberTimer !== undefined && e.emberTimer < 0.6;
+    const enraged = e.hp <= e.maxHp * 0.3;
+    const eyeR = r * (windup ? 0.58 : enraged ? 0.48 : 0.42);
+    const eg = ctx.createRadialGradient(r * 0.25, 0, 1, r * 0.25, 0, eyeR);
+    eg.addColorStop(0, '#fff3c9');
+    eg.addColorStop(0.4, windup || enraged ? '#ff7847' : '#ffb347');
+    eg.addColorStop(1, 'rgba(255,110,40,0)');
+    ctx.fillStyle = eg;
+    ctx.beginPath();
+    ctx.arc(r * 0.25, 0, eyeR, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.rotate(-ea);
+    // Boss health sliver under the disc (the wide bar sits at the top).
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillRect(-r, r + 10, r * 2, 5);
+    ctx.fillStyle = '#ff9e3d';
+    ctx.fillRect(-r, r + 10, r * 2 * (e.hp / e.maxHp), 5);
   }
   ctx.restore();
+}
+
+function drawEmber(ctx, emb, time) {
+  const pulse = 1 + Math.sin(time * 7 + emb.x * 0.05) * 0.18;
+  ctx.save();
+  ctx.translate(emb.x, emb.y);
+  const g = ctx.createRadialGradient(0, 0, 1, 0, 0, emb.radius * 2.4 * pulse);
+  g.addColorStop(0, 'rgba(255,220,150,0.95)');
+  g.addColorStop(0.35, 'rgba(255,158,61,0.75)');
+  g.addColorStop(1, 'rgba(255,110,40,0)');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(0, 0, emb.radius * 2.4 * pulse, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#fff3c9';
+  ctx.beginPath();
+  ctx.arc(0, 0, emb.radius * 0.45, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+// While a Hollow Sun lives, its name and health own the top of the sky.
+function drawBossBar(ctx, world) {
+  const boss = world.enemies.find((e) => e.kind === 'boss');
+  if (!boss) return;
+  const w = 460;
+  const x = (VIEW.w - w) / 2;
+  const y = 18;
+  ctx.fillStyle = 'rgba(10,6,16,0.72)';
+  ctx.fillRect(x, y, w, 16);
+  ctx.fillStyle = '#ff9e3d';
+  ctx.fillRect(x, y, w * Math.max(0, boss.hp / boss.maxHp), 16);
+  ctx.strokeStyle = 'rgba(255,158,61,0.6)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x, y, w, 16);
+  ctx.fillStyle = COLORS.text;
+  ctx.font = '700 13px "Segoe UI", system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`${bossOf(world.wave).name} — NIGHT ${world.wave}`, VIEW.w / 2, y + 32);
+  ctx.textAlign = 'left';
 }
 
 function drawCore(ctx, c, time) {
@@ -248,7 +340,7 @@ function bar(ctx, x, y, w, h, frac, color, label) {
 }
 
 function drawHUD(ctx, world) {
-  bar(ctx, 22, 20, 250, 18, world.shield / PLANET.maxShield, world.shield > 30 ? '#59ffc8' : '#ff5d73', `SHIELD ${Math.ceil(world.shield)}`);
+  bar(ctx, 22, 20, 250, 18, world.shield / (world.maxShield || PLANET.maxShield), world.shield > 30 ? '#59ffc8' : '#ff5d73', `SHIELD ${Math.ceil(world.shield)}`);
   ctx.fillStyle = COLORS.text;
   ctx.font = '700 21px "Segoe UI", system-ui, sans-serif';
   ctx.textAlign = 'left';
@@ -266,6 +358,12 @@ function drawHUD(ctx, world) {
   ctx.fillText(`◈ ${world.credits} credits`, VIEW.w - 22, 64);
   ctx.fillStyle = world.novaCharges > 0 ? '#59ffc8' : COLORS.dim;
   ctx.fillText(`✦ nova × ${world.novaCharges}  [space]`, VIEW.w - 22, 86);
+  if (world.blessings && world.blessings.length > 0) {
+    const names = world.blessings.map((id) => (BLESSINGS.find((b) => b.id === id) || {}).name || id);
+    ctx.font = '600 12px "Segoe UI", system-ui, sans-serif';
+    ctx.fillStyle = '#ffb347';
+    ctx.fillText(`boons: ${names.join(' · ')}`, VIEW.w - 22, 108);
+  }
   ctx.textAlign = 'left';
 }
 
@@ -300,6 +398,8 @@ function drawTitle(ctx, world) {
   ctx.fillText('Aim with the mouse — your cannon rides the orbit ring. Hold click to fire.', cx, 410);
   ctx.fillText('Space fires a nova that clears the sky; shoot mint star cores to recharge it.', cx, 434);
   ctx.fillText('Between nights, spend salvage in the shipyard. A/D or ←/→ orbits by keyboard.', cx, 458);
+  ctx.fillStyle = '#ffb347';
+  ctx.fillText('Every fifth night, the Hollow Sun rises in person. Bring it down, and claim its boon.', cx, 482);
   const pulse = 0.65 + 0.35 * Math.sin(world.time * 3.4);
   ctx.globalAlpha = pulse;
   ctx.fillStyle = '#59ffc8';
@@ -344,7 +444,7 @@ function drawShop(ctx, world, shopPrice) {
     const rowY = y + 128 + i * 52;
     const isNova = item.id === 'nova';
     const lvl = isNova ? world.novaCharges : world.levels[item.id] || 0;
-    const maxed = isNova ? world.novaCharges >= NOVA.maxCharges : lvl >= item.max;
+    const maxed = isNova ? world.novaCharges >= (world.novaMax || NOVA.maxCharges) : lvl >= item.max;
     const price = shopPrice(item);
     const afford = world.credits >= price && !maxed;
     ctx.fillStyle = 'rgba(16,32,58,0.9)';
@@ -373,6 +473,52 @@ function drawShop(ctx, world, shopPrice) {
   ctx.textAlign = 'center';
   ctx.fillText(`PRESS ENTER — NIGHT ${world.wave + 1}`, cx, y + 446);
   ctx.globalAlpha = 1;
+  ctx.textAlign = 'left';
+}
+
+function drawBlessing(ctx, world) {
+  const { x, y } = panel(ctx, 820, 420);
+  const cx = VIEW.w / 2;
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#ffb347';
+  ctx.font = '800 30px "Segoe UI", system-ui, sans-serif';
+  ctx.fillText('THE SUN FALLS', cx, y + 54);
+  ctx.fillStyle = COLORS.dim;
+  ctx.font = 'italic 15px "Segoe UI", system-ui, sans-serif';
+  ctx.fillText(BLESSING_INTRO, cx, y + 82);
+  ctx.fillStyle = COLORS.text;
+  ctx.font = '600 16px "Segoe UI", system-ui, sans-serif';
+  ctx.fillText('Choose one boon — it stays with the Keeper for the whole watch. Press 1–3.', cx, y + 112);
+  const choices = world.blessingChoices || [];
+  choices.forEach((boon, i) => {
+    const cardW = 248;
+    const cardX = x + 24 + i * (cardW + 14);
+    const cardY = y + 140;
+    ctx.fillStyle = 'rgba(24,26,44,0.92)';
+    ctx.fillRect(cardX, cardY, cardW, 168);
+    ctx.strokeStyle = 'rgba(255,179,71,0.65)';
+    ctx.lineWidth = 1.6;
+    ctx.strokeRect(cardX, cardY, cardW, 168);
+    ctx.fillStyle = '#ffb347';
+    ctx.font = '800 26px "Segoe UI", system-ui, sans-serif';
+    ctx.fillText(`${i + 1}`, cardX + cardW / 2, cardY + 42);
+    ctx.fillStyle = COLORS.text;
+    ctx.font = '700 17px "Segoe UI", system-ui, sans-serif';
+    wrapText(ctx, boon.name, cardW - 28).forEach((line, li) => {
+      ctx.fillText(line, cardX + cardW / 2, cardY + 76 + li * 21);
+    });
+    ctx.fillStyle = COLORS.dim;
+    ctx.font = '14px "Segoe UI", system-ui, sans-serif';
+    wrapText(ctx, boon.desc, cardW - 30).forEach((line, li) => {
+      ctx.fillText(line, cardX + cardW / 2, cardY + 122 + li * 19);
+    });
+  });
+  ctx.fillStyle = COLORS.dim;
+  ctx.font = 'italic 14px "Segoe UI", system-ui, sans-serif';
+  ctx.fillText(`Keeper's log — “${world.logLine}”`, cx, y + 356);
+  ctx.fillStyle = COLORS.credit;
+  ctx.font = '600 15px "Segoe UI", system-ui, sans-serif';
+  ctx.fillText('The shipyard opens once the boon is claimed.', cx, y + 384);
   ctx.textAlign = 'left';
 }
 
@@ -419,6 +565,7 @@ export function render(ctx, world, input, shopPrice) {
   drawPlanet(ctx, world);
   for (const c of world.cores) drawCore(ctx, c, world.time);
   for (const e of world.enemies) drawEnemy(ctx, e, world.time);
+  for (const emb of world.embers || []) drawEmber(ctx, emb, world.time);
 
   // Bolts as glowing streaks.
   for (const b of world.bolts) {
@@ -459,6 +606,7 @@ export function render(ctx, world, input, shopPrice) {
   ctx.restore();
 
   drawHUD(ctx, world);
+  if (world.phase === 'playing') drawBossBar(ctx, world);
   if (world.messageTimer > 0 && world.phase === 'playing') {
     ctx.globalAlpha = Math.min(1, world.messageTimer);
     ctx.fillStyle = COLORS.text;
@@ -469,6 +617,7 @@ export function render(ctx, world, input, shopPrice) {
     ctx.textAlign = 'left';
   }
   if (world.phase === 'title') drawTitle(ctx, world);
+  else if (world.phase === 'blessing') drawBlessing(ctx, world);
   else if (world.phase === 'shop') drawShop(ctx, world, shopPrice);
   else if (world.phase === 'over') drawOver(ctx, world);
   if (world.paused && world.phase === 'playing') {

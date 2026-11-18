@@ -32,8 +32,13 @@ export const ENEMIES = {
 };
 
 // Wave n (1-based) is built from these knobs; counts scale gently so a run
-// lasts minutes, not seconds, and the shop between waves matters.
+// lasts minutes, not seconds, and the shop between waves matters. Every
+// fifth night is a boss night: the queue shrinks to a trickle, because the
+// night belongs to the Hollow Sun.
 export function wavePlan(n) {
+  if (isBossNight(n)) {
+    return { asteroids: 3, drones: 2, weavers: 0, carriers: 0, spawnGap: 1.6, speedScale: 1 + (n - 1) * 0.09 };
+  }
   return {
     asteroids: 4 + n * 2,
     drones: 2 + n * 2,
@@ -43,6 +48,63 @@ export function wavePlan(n) {
     speedScale: 1 + (n - 1) * 0.09,
   };
 }
+
+// THE HOLLOW SUN — every fifth night something vast rises to drink the
+// light in person. It does not crash into Aegis like the small Hollow: it
+// holds its distance, circles, sheds drones and weavers from its dark, and
+// spits embers at the shield — embers the Keeper can shoot down. Kill it
+// and the night pays out like no other; then the Keeper claims one boon
+// from what the Sun carried before the shipyard opens.
+export const BOSS = {
+  every: 5,
+  radius: 46,
+  baseHp: 55,
+  hpPerCycle: 45, // cycle 1 = night 5, cycle 2 = night 10, ...
+  approachSpeed: 46,
+  orbitSpeed: 17, // tangential drift while it holds its standoff
+  standoff: 330, // px from the planet's centre where it circles
+  minionInterval: 4.2,
+  minionCap: 8, // live hostiles, boss included, before it stops shedding
+  emberInterval: 3.4,
+  emberSpeed: 118,
+  emberDamage: 4,
+  emberScore: 10, // shooting an ember down
+  scorePerCycle: 1500,
+  creditsPerCycle: 120,
+};
+
+export function isBossNight(n) {
+  return n > 0 && n % BOSS.every === 0;
+}
+
+export function bossCycle(n) {
+  return Math.max(1, Math.round(n / BOSS.every));
+}
+
+// The Sun wears a new name each time it returns, and the log answers it.
+const BOSS_NIGHTS = [
+  { name: 'THE HOLLOW SUN', log: 'It did not fall like the others. It rose — a sun that eats suns. I aimed into its dark and did not look away.' },
+  { name: 'THE SUN-EATER RETURNS', log: 'It learned my orbit last time. I learned its hunger. We are even, and it knows it.' },
+  { name: 'THE DARK BETWEEN STARS', log: 'There is always a bigger dark coming. There is only ever one Keeper. Hold.' },
+];
+
+export function bossOf(n) {
+  return BOSS_NIGHTS[Math.min(bossCycle(n) - 1, BOSS_NIGHTS.length - 1)];
+}
+
+// THE KEEPER'S BOONS — when a Hollow Sun falls, the Keeper claims one of
+// three boons drawn from this pool. Boons are permanent for the run and
+// stack with the shipyard refits; they are the run's long arc, the reason
+// to hunt the fifth night instead of merely surviving it.
+export const BLESSINGS = [
+  { id: 'emberheart', name: 'EMBER HEART', desc: 'Max shield +30, and mend 30 now' },
+  { id: 'starforge', name: 'STARFORGE ROUNDS', desc: 'Every bolt deals +1 damage' },
+  { id: 'pace', name: "KEEPER'S PACE", desc: 'Fire 15% faster, for good' },
+  { id: 'seconddawn', name: 'SECOND DAWN', desc: '+1 nova charge, and novas hold +1 more' },
+  { id: 'coremagnet', name: 'CORE MAGNET', desc: 'Star cores drop twice as often' },
+];
+
+export const BLESSING_INTRO = 'The Sun falls. What it carried, the Keeper may claim — once.';
 
 // THE LAST KEEPER — the story frame. Every other star has gone out; Aegis is
 // the last lit world, and the Hollow — things that feed on light — fall toward
